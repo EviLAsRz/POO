@@ -1,8 +1,6 @@
 ### C++ ###
 # Prerequisites
 *.d
-*.tar
-*.tar.gz
 # Compiled Object files
 *.slo
 *.lo
@@ -34,5 +32,6 @@
 *.app
 
 # Vscode
-
+*.tar
+*.tar.gz
 *.vscode
