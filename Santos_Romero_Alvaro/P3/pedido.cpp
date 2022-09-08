@@ -9,7 +9,7 @@
 
 int Pedido::num_pedido_ = 0;        //inicializacion del atributo estático
 
-Pedido::Pedido(Usuario_Pedido &upe, Pedido_Articulo &part, Usuario &u, const Tarjeta &t, const Fecha &f):tarjeta_(&t), num_(num_pedido_ + 1), total_(0){
+Pedido::Pedido(Usuario_Pedido &upe, Pedido_Articulo &part, Usuario &u, const Tarjeta &t, const Fecha &f):num_(num_pedido_ + 1), tarjeta_(&t), total_(0){
 
     if(t.caducidad() < f){
         throw Tarjeta::Caducada(t.caducidad()); //si la tarjeta está caducada.
