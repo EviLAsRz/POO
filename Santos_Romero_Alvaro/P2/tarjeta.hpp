@@ -53,7 +53,7 @@ class Tarjeta{
     const Usuario *titular() const {return usuario_;};
     bool activa() const {return activa_;};
     Tipo tipo() const {return tipo_;};
-    bool activa(bool valor = true);
+    bool activa(bool valor);
     void anula_titular();
     //clase caducada
     class Caducada{

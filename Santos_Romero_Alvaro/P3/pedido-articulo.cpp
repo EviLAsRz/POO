@@ -90,7 +90,6 @@ std::ostream &operator << (std::ostream &os, const Pedido_Articulo::ItemsPedido 
 std::ostream &operator << (std::ostream &os, const Pedido_Articulo::Pedidos &ped){
 
     double price = 0;
-    unsigned t = 0;
 
     os << "\n";
     os << std::setw(40) << std::setfill('=') << '\n' << std::setfill(' ') << std::endl;
@@ -103,7 +102,6 @@ std::ostream &operator << (std::ostream &os, const Pedido_Articulo::Pedidos &ped
         os << (i->first)->fecha() << std::endl;
 
         price += (i->second).cantidad() * (i->second).precio_venta();
-        t += (i->second).cantidad();
     }
 
     os << std::setw(40) << std::setfill('=') << '\n' << std::setfill(' ') << std::endl;

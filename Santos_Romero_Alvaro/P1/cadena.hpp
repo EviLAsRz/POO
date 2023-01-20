@@ -3,7 +3,7 @@
 #define CADENA_HPP
 
 #include <iterator> 
-
+#include <iostream>
 
 class Cadena
 {

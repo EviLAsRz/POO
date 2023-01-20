@@ -56,7 +56,7 @@ bool operator <(const Numero &a, const Numero &b){
 
 //CLASE TARJETA
 
-Tarjeta::Tarjeta(const Numero &numero, Usuario &usuario, const Fecha &fecha_cad):numero_(numero), usuario_(&usuario), fecha_cad_(fecha_cad){
+Tarjeta::Tarjeta(const Numero &numero, Usuario &usuario, const Fecha &fecha_cad):numero_(numero), usuario_(&usuario), fecha_cad_(fecha_cad), activa_(true){
 
     if(fecha_cad_ < Fecha()){       //si la fecha de la tarjeta es menor que la fecha actual, significa que ha caducado
 
@@ -91,8 +91,6 @@ Tarjeta::Tarjeta(const Numero &numero, Usuario &usuario, const Fecha &fecha_cad)
 
         tipo_ = Tipo::Maestro;
     }
-
-    activa_ = true; //por defecto, la tarjeta se crea activada
 
     usuario.es_titular_de(*this); //usuario al que pertenece la tarjeta es el usuario con que se crea el objeto tarjeta
 }
