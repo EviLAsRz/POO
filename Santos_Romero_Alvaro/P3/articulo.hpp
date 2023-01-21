@@ -7,7 +7,7 @@
 class Articulo{
 
     public:
-    Articulo(const Cadena &refer, const Cadena &tit, const Fecha &f, const double pr, unsigned stock): cod_refer_(refer), titulo_(tit), f_public_(f),precio_(pr), stock_(stock){
+    Articulo(const Cadena refer, const Cadena tit, const Fecha f, double pr, unsigned stock): cod_refer_(refer), titulo_(tit), f_public_(f),precio_(pr), stock_(stock){
     };
 
     Cadena referencia() const;

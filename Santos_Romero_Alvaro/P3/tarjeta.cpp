@@ -11,7 +11,7 @@ bool luhn(const Cadena &numero);    //se declara la funcion luhn de luhn.cpp
 
 Numero::Numero(const Cadena &numero): numero_(longitud(numero)){
 
-    if (std::find_if(numero_.begin(), numero_.end(), std::not1(esDigito())) != numero_.end()){
+    if (std::count_if(numero_.begin(), numero_.end(), static_cast<int(*)(int)>(std::isdigit)) != numero_.length()){
         //se comprueba si en la cadena existe caracteres distintos de numeros
         //para ello, se utiliza static_cast, para convertir los caracteres a numero, y luego con isdigit se comprueba si es un numero
         //y que no sea distinto del tamaño del numero
@@ -56,7 +56,7 @@ bool operator <(const Numero &a, const Numero &b){
 
 //CLASE TARJETA
 
-Tarjeta::Tarjeta(const Numero &numero, Usuario &usuario, const Fecha &fecha_cad):numero_(numero), usuario_(&usuario), fecha_cad_(fecha_cad){
+Tarjeta::Tarjeta(const Numero &numero, Usuario &usuario, const Fecha &fecha_cad):numero_(numero), usuario_(&usuario), fecha_cad_(fecha_cad), activa_(true){
 
     if(fecha_cad_ < Fecha()){       //si la fecha de la tarjeta es menor que la fecha actual, significa que ha caducado
 
@@ -91,8 +91,6 @@ Tarjeta::Tarjeta(const Numero &numero, Usuario &usuario, const Fecha &fecha_cad)
 
         tipo_ = Tipo::Maestro;
     }
-
-    activa_ = true; //por defecto, la tarjeta se crea activada
 
     usuario.es_titular_de(*this); //usuario al que pertenece la tarjeta es el usuario con que se crea el objeto tarjeta
 }
@@ -130,7 +128,7 @@ std::ostream &operator <<(std::ostream &os, const Tarjeta::Tipo& tipo){
         case Tarjeta::Maestro: os << "Maestro";break;
         case Tarjeta::JCB: os << "JCB";break;
         case Tarjeta::AmericanExpress: os << "AmericanExpress";break;
-        case Tarjeta::OTRO: os << "Tipo indeterminado";break;
+        case Tarjeta::OTRO: os << "OTRO";break;
     }
     return os;
 }

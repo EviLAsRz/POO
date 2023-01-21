@@ -8,11 +8,6 @@
 
 class Usuario;
 
-struct esDigito: public std::unary_function<char, bool>{
-
-    bool operator() (char c) const {return isdigit(c);};
-};
-
 class Numero{
 
     public:
@@ -58,7 +53,7 @@ class Tarjeta{
     const Usuario *titular() const {return usuario_;};
     bool activa() const {return activa_;};
     Tipo tipo() const {return tipo_;};
-    bool activa(bool valor = true);
+    bool activa(bool valor);
     void anula_titular();
     //clase caducada
     class Caducada{

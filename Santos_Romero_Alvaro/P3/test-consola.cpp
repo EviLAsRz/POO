@@ -11,11 +11,12 @@
 #include "usuario.hpp"
 #include "tarjeta.hpp"
 #include "articulo.hpp"
+#ifndef P2
 #include "cadena.hpp"
 #include "pedido.hpp"
 #include "usuario-pedido.hpp"
 #include "pedido-articulo.hpp"
-
+#endif
 
 using std::cout;
 using std::cerr;
@@ -28,11 +29,11 @@ using std::endl;
 void numero_incorrecto(Numero::Incorrecto);
 
 /**
-   Elimina el separador de decimales, porque da problemas con
-   algunas localizaciones españolas, que incorrectamente 
-   (según la RAE) ponen el ".". Debe ser un espacio "fino", salvo
-   para los años...
-   También, de paso, fijamos el separador de decimales a la coma.
+  Elimina el separador de decimales, porque da problemas con
+  algunas localizaciones españolas, que incorrectamente 
+  (según la RAE) ponen el ".". Debe ser un espacio "fino", salvo
+  para los años...
+  También, de paso, fijamos el separador de decimales a la coma.
 */
 struct sin_separador : std::numpunct<char> {
 protected:
@@ -52,7 +53,7 @@ int main()
     krispin("krispin", "Crispin", "Klander", 
 	    "Calle del Jurel, 876 (Cerdanyola del Vallès)", "Pheaj9li"),
     yoshua("yoshua", "Yoshua", "Romegosa", 
-	   "Callejón del Algarrobo, s/n (Mondragón)", "ahxo2Aht"),
+	  "Callejón del Algarrobo, s/n (Mondragón)", "ahxo2Aht"),
     yessi("yessi", "Yesica", "Minglanilla",
 	  "Calle del Almendro, 345 (Corrubedo)", "Roh9aa5v");
 
