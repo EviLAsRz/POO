@@ -11,11 +11,12 @@
 #include "usuario.hpp"
 #include "tarjeta.hpp"
 #include "articulo.hpp"
+#ifndef P2
 #include "cadena.hpp"
 #include "pedido.hpp"
 #include "usuario-pedido.hpp"
 #include "pedido-articulo.hpp"
-
+#endif
 
 using std::cout;
 using std::cerr;

@@ -1,61 +1,67 @@
-//
-// Created by Claudia Soriano Roldán on 08/05/2019.
-//
-
 #ifndef PEDIDO_HPP
 #define PEDIDO_HPP
-
-#include <iostream>
-#include <utility>
-#include <iomanip>
-#include "../P1/fecha.hpp"
-#include "usuario.hpp"
-
-class Usuario_Pedido;
+#include "usuario.hpp" 
+#include "tarjeta.hpp" 
+#include "../P1/fecha.hpp" 
+#include "../P1/cadena.hpp"
+#include "articulo.hpp" 
+#include "pedido-articulo.hpp" 
+#include "usuario-pedido.hpp" 
+#include<iomanip> 
+#include<iostream> 
 class Pedido_Articulo;
-
 class Pedido {
-public:
-    Pedido(Usuario_Pedido& usuped, Pedido_Articulo& pedart, Usuario& u, const Tarjeta& t, const Fecha& f = Fecha() );
 
-    int numero() const { return num_ ; }
-    double total() const { return total_;}
-    Fecha fecha() const  {return fecha_;}
-    static int n_total_pedidos() {return num_pedido_;}
-    const Tarjeta* tarjeta() const {return tarjeta_ ;}
-
-    class Impostor{
     public:
-        Impostor(Usuario& u): usu_(&u) {}
-        Usuario& usuario() const {return *usu_;};
-    private:
-        Usuario* usu_;
-    };
 
-    class SinStock{
-    public:
-        SinStock(Articulo* a):articulo_(a) {}
-        Articulo& articulo() const { return *articulo_ ;} ;
-    private:
-        Articulo* articulo_ ;
-    };
+        static unsigned n_total_pedidos(){ return n_ped_t_; }
+        Pedido(Usuario_Pedido& , Pedido_Articulo&, Usuario& , const Tarjeta& , const Fecha& f= Fecha());//f= fecha actual
+/* -------------------------- clases de excepciones ------------------------- */
 
-    class Vacio{
-    public:
-        Vacio(Usuario& u): usu_(&u) {}
-        Usuario& usuario() const {return *usu_;};
-    private:
-        Usuario* usu_;
-    };
+        class Vacio{ 
 
-private:
-    int num_;
-    const Tarjeta* tarjeta_;
-    Fecha fecha_;
-    double total_;
-    static int num_pedido_;
+            public: 
+                Vacio(Usuario* us): us_(us){} 
+                Usuario& usuario() const{ return *us_; } 
+            
+            private:
+                Usuario* us_;
+        };
+
+        class Impostor{ 
+
+            public: 
+                Impostor(Usuario* us): us_(us){} 
+                Usuario& usuario() const{return *us_;} 
+
+            private:
+                Usuario* us_;
+        };
+
+        class SinStock{ 
+
+            public: 
+                SinStock(Articulo* art): art_(art){} 
+                Articulo& articulo() const{return *art_;}
+
+            private:
+                Articulo* art_; 
+        };
+
+/* -------------------------- metodos observadores -------------------------- */
+
+    const int numero() const noexcept { return numero_ped_; } 
+    const Tarjeta* tarjeta() const noexcept { return tarjeta_pago_; } 
+    const Fecha fecha() const noexcept { return fecha_pedido_; } 
+    const double total() const noexcept { return importe_total_; } 
+
+    private: 
+        int numero_ped_; 
+        const Tarjeta* tarjeta_pago_;  
+        double importe_total_; 
+        Fecha fecha_pedido_;
+        static unsigned n_ped_t_; 
 };
+std::ostream& operator<<(std::ostream& salida, const Pedido& p);
 
-std::ostream& operator <<(std::ostream& output, const Pedido& p);
-
-#endif //P3_PEDIDO_H
+#endif

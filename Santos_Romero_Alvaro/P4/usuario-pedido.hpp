@@ -1,46 +1,29 @@
-//
-// Created by Claudia Soriano Roldán on 15/05/2019.
-//
-
-#ifndef P3_USUARIO_PEDIDO_H
-#define P3_USUARIO_PEDIDO_H
-
+#ifndef USUARIO_PEDIDO_HPP_
+#define USUARIO_PEDIDO_HPP_
 #include <map>
 #include <set>
-#include <utility>
-#include "pedido.hpp"
-#include "usuario.hpp"
 
+class Pedido; 
+class Usuario; 
 class Usuario_Pedido{
-public:
-    typedef std::set<Pedido*> Pedidos;
+    public: 
 
-    void asocia(Pedido& p, Usuario& user);
-    void asocia(Usuario& user, Pedido& p);
+/* ------------------------------ diccionarios ------------------------------ */
+        typedef std::set<Pedido*> Pedidos; 
+        typedef std::map<Usuario*, Pedidos> User_Ped; 
+        typedef std::map<Pedido*, Usuario*> Ped_User; 
 
-    Pedidos pedidos(Usuario& user);
-    Usuario* cliente(Pedido& p);
+/* ------------------------------ asociaciones ------------------------------ */
+        void asocia(Usuario& u, Pedido& p){
+            user_ped_[&u].insert(&p);//usuario--> pedido
+            ped_user_[&p] = &u;//pedido-->usuario
+        } 
+        void asocia(Pedido& p, Usuario& u){ asocia(u, p); } 
+        Usuario* cliente(Pedido& p){ return ped_user_.find(&p)->second; } 
+        Pedidos& pedidos(Usuario& u){ return user_ped_.find(&u)->second; }
 
-private:
-    std::map<Pedido*, Usuario*> peduser_;
-    std::map<Usuario*, Pedidos> userped_;
-
+    private: 
+        User_Ped user_ped_; 
+        Ped_User ped_user_; 
 };
-typedef std::set<Pedido*> Pedidos;
-inline void Usuario_Pedido::asocia(Pedido &p, Usuario &user)
-{
-    userped_[&user].insert(&p);
-    peduser_[&p] = &user;
-}
-
-inline void Usuario_Pedido::asocia(Usuario &user, Pedido &p)
-{
-    return asocia(p, user);
-}
-
-inline Pedidos Usuario_Pedido::pedidos(Usuario& user) {return userped_[&user];}
-inline Usuario* Usuario_Pedido::cliente(Pedido& p) {return peduser_[&p];}
-
-
-
-#endif //P3_USUARIO_PEDIDO_H
+#endif

@@ -11,7 +11,7 @@
  * En este programa no usamos la macro P2, así que simplemente la anulamos.
  */
 #undef P2
-#define P3
+
 #include "caclibrary.h"
 
 #include <vector>

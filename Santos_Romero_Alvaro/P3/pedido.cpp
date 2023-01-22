@@ -1,57 +1,59 @@
 #include "pedido.hpp"
-#include "tarjeta.hpp"
-#include "usuario-pedido.hpp"
-#include "pedido-articulo.hpp"
-#include "../P1/cadena.hpp"
-#include "../P1/fecha.hpp"
-#include <iostream>
-#include <iomanip>
 
-int Pedido::num_pedido_ = 0;        //inicializacion del atributo estático
+unsigned Pedido::num_pedido_ = 0;        //inicializacion del atributo estático
 
-Pedido::Pedido(Usuario_Pedido &upe, Pedido_Articulo &part, Usuario &u, const Tarjeta &t, const Fecha &f):num_(num_pedido_ + 1), tarjeta_(&t), total_(0){
+Pedido::Pedido(Usuario_Pedido &upe, Pedido_Articulo &part, Usuario &u, const Tarjeta &t, const Fecha &f)
+:num_(num_pedido_ + 1), tarjeta_(&t), fecha_(f), total_(0.00) {
 
-    if(t.caducidad() < f){
-        throw Tarjeta::Caducada(t.caducidad()); //si la tarjeta está caducada.
-    }
-
-    if(u.n_articulos() == 0){   //si no tiene articulos
-        throw Vacio(u);
+    if(u.compra().empty() == true){   //si no tiene articulos
+        throw Vacio(&u);
     }
 
     if(t.titular() != &u){      //si el titular es distinto al usuario introducido
-        throw Impostor(u);
+        throw Impostor(&u);
     }
 
     if(t.activa() != true){     //si la tarjeta está desactivada
         throw Tarjeta::Desactivada();
     }
 
+    if(t.caducidad() < f){
+        throw Tarjeta::Caducada(t.caducidad()); //si la tarjeta está caducada.
+    }
+
     auto carro = u.compra();
 
-    for(auto i: carro){
-        if((i.first)->stock() < (i.second)){
-            const_cast<Usuario::Articulos&>(u.compra()).clear();
-            throw SinStock(i.first);
+    for(Usuario::Articulos::iterator i = carro.begin(); i != carro.end(); ++i){
+        
+        if(ArticuloAlmacenable* art_almacenable = dynamic_cast<ArticuloAlmacenable*>(i->first)) {
+            if (i->second > art_almacenable->stock()) {
+                const_cast<Usuario::Articulos&>(u.compra()).clear();
+                throw SinStock(i->first);
+            }
+        } else {
+            if(LibroDigital* libro_digital = dynamic_cast<LibroDigital*>(i->first)) {
+                if(libro_digital->f_expir() < f)
+                    u.compra(*i->first, 0);
+            }
+            if (u.compra().empty()) {
+                throw Vacio(&u);
+            }
         }
     }
 
-    carro = u.compra();
+    upe.asocia(*this, u);
 
-    for(auto it: carro){
+    auto temp = u.compra();
 
-        unsigned int cant = (it.second);
-        Articulo *a = (it.first);
-        double price = a->precio();
-        a->stock() -=cant;
-
-        part.pedir(*this, *a, price, cant);
-        total_ += price * cant;
-        u.compra(*a, 0);
+    for(auto it: temp){
+        
+        total_ += it.first->precio()*it.second;
+        part.pedir(*this, *it.first ,it.first->precio(), it.second);
+        if(ArticuloAlmacenable * art_almacenable = dynamic_cast<ArticuloAlmacenable*>(it.first)) {
+            art_almacenable->stock() -= it.second;
+        }
+    u.compra(*it.first,0);
     }
-
-    upe.asocia(u, *this);
-
     ++num_pedido_;
 }
 

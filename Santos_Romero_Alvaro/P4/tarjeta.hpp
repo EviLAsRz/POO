@@ -1,103 +1,99 @@
-//
-// Created by Claudia Soriano Roldán on 26/04/2019.
-//
-
-#ifndef TARJETA_HPP
-#define TARJETA_HPP
-
+#ifndef TARJETA_H
+#define TARJETA_H
 #include "../P1/cadena.hpp"
 #include "../P1/fecha.hpp"
-#include "usuario.hpp"
-#include <ostream>
-#include <functional>
-
+#include <set>
 class Usuario;
 
-struct EsDigito: public std::unary_function<char,bool>
-{
-    bool operator() (char x) const {return isdigit(x); };
+class Numero {
+    public:
+        //CONSTRUCTORES
+        Numero(const Cadena& n);
+        
+    /* ------------------------------- constantes ------------------------------- */
+        enum Razon{LONGITUD,DIGITOS,NO_VALIDO};
+    /* --------------------------------- METODOS -------------------------------- */
+        const char* n()const{return numero_.c_str();}
+        operator const char*()const;
+        Cadena espacio(const Cadena& cad);
+        Cadena longitud(const Cadena& cad);
+
+        /*Clase incorrecto para el manejo de excepciones*/
+        class Incorrecto {
+
+            public:
+                Incorrecto(const Razon r_):r(r_){};
+                Razon razon()const{return r;} 
+
+            private:
+                Razon r; 
+        };
+
+    private:
+        Cadena numero_;
 };
 
-/******+********* CLASE NUMERO **********************/
+/* ------------------------------ CLASE TARJETA ----------------------------- */
 
-class Numero{
-public:
-    enum Razon {LONGITUD, NO_VALIDO, DIGITOS};
+class Tarjeta {
 
-    Numero(const Cadena& n);
-
-    friend bool operator <(const Numero& x, const Numero& y);
-
-    operator const char*() const;
-
-    class Incorrecto{
     public:
-        Incorrecto(Razon r): fallo_(r) {}
-        const Razon& razon() const {return fallo_;};
+        typedef  std::set<Numero> num;
+        enum Tipo{Otro,VISA,Mastercard,Maestro,JCB,AmericanExpress};
+        
+        Tarjeta(const Numero& numero, Usuario& user,const Fecha& fecha_caducidad);
+        Tarjeta(const Tarjeta& that)=delete;
+        Tarjeta& operator=(const Tarjeta&)=delete;
+        ~Tarjeta();
+
+        const Fecha cuando ()const{ return caducidad_; }
+        void anula_titular(){ titular_ = nullptr;activa_=false; }
+    
+/* ------------------- Clases para el manejo de excepciones ------------------ */
+        class Caducada {
+
+            public:
+                Caducada(const Fecha& f_):f_caducada(f_){};
+                const Fecha cuando()const {return f_caducada;}
+            
+            private:
+                Fecha f_caducada;
+        };
+
+        class Num_duplicado{
+
+            public:
+                Num_duplicado(const Numero& n_):n(n_){};
+                const Numero que()const{return n;}
+            private:
+                Numero n;
+        };
+        
+        class Desactivada{
+        };
+
+/* ------------------------------ observadores ------------------------------ */
+        Numero numero()const{ return numero_; }
+        const Usuario* titular()const{ return titular_; }
+        Fecha caducidad()const{ return caducidad_; }
+        bool activa()const{return activa_; }
+        bool activa(bool f);
+        Tipo tipo()const{ return tipo_; }
+        Tarjeta::Tipo selec_tipo()const;
+
     private:
-        Razon fallo_;
-    };
-
-private:
-    Cadena num_;
-
-    Cadena elimina_espacio(const Cadena& cad);
-    Cadena longitud_cadena(const Cadena& cad);
+        Numero numero_;
+        const Usuario* titular_;
+        Fecha caducidad_;
+        bool activa_;
+        Tipo tipo_;
+        static std::set<Numero> numeros;
 };
 
+bool operator <(const Numero&, const Numero&);
+bool operator < (const Tarjeta& a, const Tarjeta& b);
 
-/***************** CLASE TARJETA **************************/
-
-class Tarjeta{
-public:
-    enum Tipo {Otro, VISA, Mastercard, Maestro, JCB, AmericanExpress};
-    Tarjeta(const Numero& n, Usuario& user, const Fecha& f);
-    Tarjeta(const Tarjeta& t) = delete;
-
-    void anula_titular();
-    Tarjeta& operator =(const Tarjeta& t) = delete;
-
-    Tipo tipo() const {return tipo_;};
-    Numero numero() const {return numero_;};
-    const Usuario* titular() const {return usr_;};
-    Fecha caducidad() const {return caducidad_;};
-    bool activa() const {return actividad_;};
-    bool activa(bool valor = true);
-
-    ~Tarjeta();
-
-    class Caducada{
-    public:
-        Caducada(const Fecha& f):fc_(f){}
-        Fecha cuando() const {return fc_;}
-    private:
-        Fecha fc_;
-    };
-
-    class Desactivada{
-   
-    };
-
-    class Num_duplicado
-    {
-    public:
-        Num_duplicado(const Numero& n): n_(n){}
-        const Numero que() const {return n_;};
-    private:
-        Numero n_;
-    };
-
-private:
-    Tipo tipo_;
-    Numero numero_;
-    const Usuario* usr_;
-    Fecha caducidad_;
-    bool actividad_;
-};
-
-std::ostream& operator << (std::ostream& output, const Tarjeta::Tipo& t) ;
-std::ostream& operator << (std::ostream& output, const Tarjeta& t) ;
-bool operator <(const Tarjeta& a, const Tarjeta& b);
-
-
-#endif //SORIANO_ROLDAN_CLAUDIA_TARJETA_H
+/* ------------------ SOBRECARGA DEL OPERADOR DE INSERCION ------------------ */
+std::ostream& operator<<(std::ostream& salida,const Tarjeta& a)noexcept;
+std::ostream& operator<<(std::ostream& salida,const Tarjeta::Tipo a)noexcept;
+#endif

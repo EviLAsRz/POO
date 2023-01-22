@@ -5,6 +5,7 @@
 #include "../P1/fecha.hpp"
 #include "usuario.hpp"
 #include <iostream>
+#include <set>
 
 class Usuario;
 
@@ -13,8 +14,12 @@ class Numero{
     public:
 
     enum Razon {LONGITUD, NO_VALIDO, DIGITOS};
+
     Numero(const Cadena &numero);
     operator const char* () const;
+    const char* n()const{return numero_.c_str();}
+    Cadena espacios(const Cadena &cadena);      //quitar los espacios
+    Cadena longitud(const Cadena &cadena);      //longitud de la cadena
     friend bool operator <(const Numero& a, const Numero &b);
     
     class Incorrecto{
@@ -32,8 +37,7 @@ class Numero{
     private:
 
     Cadena numero_;
-    Cadena espacios(const Cadena &cadena);      //quitar los espacios
-    Cadena longitud(const Cadena &cadena);      //longitud de la cadena
+
 };
 
 
@@ -41,7 +45,8 @@ class Tarjeta{
 
     public:
 
-    enum Tipo{OTRO, VISA, Mastercard, Maestro, JCB, AmericanExpress};
+    typedef std::set<Numero> num;
+    enum Tipo{Otro, VISA, Mastercard, Maestro, JCB, AmericanExpress};
 
     Tarjeta(const Numero &numero, Usuario &usuario, const Fecha &fecha_cad);
     Tarjeta(const Tarjeta &tarjeta) = delete;
@@ -53,19 +58,20 @@ class Tarjeta{
     const Usuario *titular() const {return usuario_;};
     bool activa() const {return activa_;};
     Tipo tipo() const {return tipo_;};
+    Tarjeta::Tipo selec_tipo()const;
     bool activa(bool valor);
-    void anula_titular();
+    void anula_titular() {usuario_ = nullptr; activa_ = false;}
     //clase caducada
     class Caducada{
 
         public:
 
-        Caducada(const Fecha &fecha):fecha_(fecha){};
-        Fecha cuando() const {return fecha_;};
+            Caducada(const Fecha &fecha):fecha_(fecha){};
+            Fecha cuando() const {return fecha_;};
 
         private:
 
-        Fecha fecha_;
+            Fecha fecha_;
     };
 
     class Desactivada{};
@@ -75,12 +81,12 @@ class Tarjeta{
         
         public:
 
-        Num_duplicado(const Numero &numero):num_(numero){};
-        Numero que() const {return num_;};
+            Num_duplicado(const Numero &numero):num_(numero){};
+            const Numero que() const {return num_;};
 
         private:
 
-        Numero num_;
+            Numero num_;
     };
 
     private:
@@ -90,12 +96,13 @@ class Tarjeta{
     Fecha fecha_cad_;
     bool activa_;
     Tipo tipo_;
+    static std::set<Numero> numeros;
 
 };
 
 std::ostream &operator <<(std::ostream &os, const Tarjeta::Tipo &tipo);
 std::ostream &operator <<(std::ostream &os, const Tarjeta &tarjeta);
 bool operator <(const Tarjeta &a, const Tarjeta &b);
-bool operator >(const Tarjeta &a, const Tarjeta &b);
+bool operator <(const Tarjeta &a, const Numero&);
 
 #endif

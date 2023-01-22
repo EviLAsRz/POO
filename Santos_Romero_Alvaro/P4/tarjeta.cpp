@@ -1,182 +1,127 @@
-//
-// Created by Claudia Soriano Roldán on 26/04/2019.
-//
-
 #include "tarjeta.hpp"
-#include <iomanip>
-#include <cstring>
-#include <algorithm>
+#include <iomanip> 
+#include <cstring> 
+#include <string.h> 
 #include <cctype>
-#include <iostream>
-#include <functional>
+#include <algorithm>
+#include "usuario.hpp"
 
 bool luhn(const Cadena& num);
+/* ------------------------------ Clase numero ------------------------------ */
+std::set<Numero>Tarjeta::numeros;
+Numero::Numero(const Cadena& n): numero_(longitud(n)) {
 
-/********* CLASE NUMERO *****************/
+    if( std::count_if(numero_.begin(), numero_.end(), static_cast<int(*)(int)>(std::isdigit)) != numero_.length() )
+        throw Incorrecto(Razon::DIGITOS);
 
-Numero::Numero(const Cadena& n): num_(longitud_cadena(n))
-{
-
-    if( std::find_if(num_.begin(), num_.end(), std::not1(EsDigito())) != num_.end())
-    {
-        throw Incorrecto(Razon::DIGITOS) ;
-    }
-
-    if(!luhn(num_))
-    {
+    //EXCEPCION LONGITUD
+    if (numero_.length()<13||numero_.length()>19)
+        throw Incorrecto(Razon::LONGITUD);
+    //EXCEPCION NO_VALIDO
+    if (!luhn(numero_))
         throw Incorrecto(Razon::NO_VALIDO);
-    }
 }
 
-Cadena Numero::elimina_espacio(const Cadena &cad)
-{
-    Cadena aux (cad) ;
+Numero::operator const char*()const { return numero_.c_str(); }
 
-    std::remove_if(aux.begin(),aux.end()+1,[](char c){return isspace(c);});
+Cadena Numero::espacio(const Cadena &cad) {
 
-    return Cadena(aux.c_str()) ;
-
+    Cadena aux_cad (cad);
+    std::remove_if(aux_cad.begin(),aux_cad.end()+1,[](char c){return isspace(c);});
+    return Cadena(aux_cad.c_str());
 }
 
-Cadena Numero::longitud_cadena(const Cadena &cad)
-{
+Cadena Numero::longitud(const Cadena &cad) {
 
-
-    Cadena aux = elimina_espacio(cad) ;
-
+    Cadena aux = espacio(cad) ;
     if(aux.length() > 19 || aux.length() == 0 || aux.length() < 13 )
-    {
-        throw Incorrecto(Razon::LONGITUD) ;
-    }
+        throw Incorrecto(Razon::LONGITUD);
 
     return aux ;
 }
 
-Numero::operator const char*() const
-{
-    return num_.c_str();
-}
+bool operator <(const Numero& a, const Numero& b) { return strcmp(a,b)<0; }
 
-bool operator <(const Numero& x, const Numero& y)
-{
-    return strcmp(x,y) < 0;
-}
+/* ------------------------------ clase tarjeta ----------------------------- */
 
 
-/******************** CLASE TARJETA *********************/
+Tarjeta::Tarjeta(const Numero& numero, Usuario& user,const Fecha& fecha_caducidad):
+    numero_(numero), titular_(&user), caducidad_(fecha_caducidad), activa_(true), tipo_(selec_tipo()) {
 
-Tarjeta::Tarjeta(const Numero &n, Usuario& user, const Fecha &f): numero_(n), usr_(&user), caducidad_(f)
-{
+/* ------------------------- La tarjeta esta Caducada ------------------------ */
     if (caducidad_ < Fecha())
-    {
-        throw Caducada(caducidad_);
+        throw Caducada(fecha_caducidad);
+
+    if (numeros.insert(numero_).second==false)
+        throw Num_duplicado(numero_);
+
+    auto tit_ = const_cast<Usuario*>(titular_);
+    tit_->es_titular_de(*this);
+}
+
+Tarjeta::Tipo Tarjeta::selec_tipo()const{
+
+    Cadena aux_tipo =numero_.n();
+    if (aux_tipo[0]=='3') {
+        if (aux_tipo[1]=='4'||aux_tipo[1]=='7')
+            return AmericanExpress;
+        else
+            return JCB;
     }
+    else if(aux_tipo[0]=='4')
+        return VISA;
+    else if(aux_tipo[0]=='5')
+        return Mastercard;
+    else if (aux_tipo[0]=='6')
+        return Maestro;
+    else
+        return Otro;
+}
 
-    const char* aux = n;
-
-    tipo_ = Tipo::Otro;
-
-    if((aux[0] == '3' && aux[1] == '4') || (aux[0] == '3' && aux[1] == '7'))
-    {
-        tipo_ = Tipo::AmericanExpress;
-    }
-
-    if((aux[0] == '3' && aux[1] != '4') || (aux[0] == '3' && aux[1] != '7'))
-    {
-        tipo_ = Tipo::JCB;
-    }
-
-    if((aux[0] == '4'))
-    {
-        tipo_ = Tipo::VISA;
-    }
-
-    if((aux[0] == '5'))
-    {
-        tipo_ = Tipo::Mastercard;
-    }
-
-    if((aux[0] == '6'))
-    {
-        tipo_ = Tipo::Maestro;
-    }
-
+Tarjeta::~Tarjeta() {
     
-    actividad_ = true;
+    if(Usuario* temp_u = const_cast<Usuario*>(titular_))
+        temp_u->no_es_titular_de(*this);
 
-    user.es_titular_de(*this);
+    numeros.erase(numero_);
 }
 
-bool Tarjeta::activa(bool valor)
-{
-	actividad_ = valor;
-	return actividad_;
+bool Tarjeta::activa(bool f) {
+    activa_=f;
+    return activa_;
 }
 
-void Tarjeta::anula_titular()
-{
-    usr_= nullptr;
-}
+ostream& operator<<(std::ostream& salida,const Tarjeta::Tipo a)noexcept {
 
-Tarjeta::~Tarjeta()
-{
-    if(Usuario* usu = const_cast<Usuario*>(usr_)){
-        usu->no_es_titular_de(*this);
+    switch(a) { 
+        case Tarjeta::VISA: salida << "VISA"; break;
+        case Tarjeta::Mastercard: salida << "Mastercard"; break; 
+        case Tarjeta::Maestro: salida << "Maestro"; break; 
+        case Tarjeta::JCB:salida << "JCB"; break; 
+        case Tarjeta::AmericanExpress: salida << "AmericanExpress"; break; 
+        case Tarjeta::Otro: salida << "Tipo indeterminado"; break;  
     }
+    return salida;
 }
 
-bool operator <(const Tarjeta& t1, const Tarjeta& t2)
-{
-    return t1.numero() < t2.numero();
+ostream& operator<<(std::ostream& salida,const Tarjeta& t)noexcept {
+    int i=0;
+    salida << t.tipo() << std::endl << t.numero() << std::endl; 
+    Cadena aux_cad_temp = t.titular()->nombre(); 
+    
+    while(aux_cad_temp[i]!='\0') {
+        if (islower(aux_cad_temp[i])) aux_cad_temp[i]=toupper(aux_cad_temp[i]);i++;
+    } 
+    salida << aux_cad_temp << " "; 
+    i=0; 
+    aux_cad_temp = t.titular()->apellidos();
+
+    while(aux_cad_temp[i]!='\0') {
+        if (islower(aux_cad_temp[i])) aux_cad_temp[i]=toupper(aux_cad_temp[i]);i++;
+    } 
+    salida << aux_cad_temp << std::endl; 
+    salida << "Caduca: " << std::setfill ('0') << std::setw (2) << t.caducidad().mes() << "/" << std::setw (2) << (t.caducidad().anno() % 100) << std::endl; 
+    return salida; 
 }
 
-std::ostream& operator << (std::ostream& output ,const Tarjeta::Tipo& t)
-{
-
-    switch(t)
-    {
-        case 0: output << "Tipo indeterminado" ; break;
-        case 1: output << "VISA" ; break ;
-        case 2: output << "Mastercard"; break ;
-        case 3: output << "Maestro"; break ;
-        case 4: output << "JCB" ; break ;
-        case 5: output << "AmericanExpress" ; break ;
-
-        default: output << "Otra"; break ;
-    }
-
-    return output ;
-
-}
-
-std::ostream& operator << (std::ostream& output, const Tarjeta& t)
-{
-	Cadena aux1 = t.titular()->nombre();
-	Cadena aux2 = t.titular()->apellidos();
-
-
-	for(size_t i=0; i< aux1.length(); i++)
-	{
-		aux1[i] = toupper(aux1[i]);
-	}
-
-	for(size_t j=0; j< aux2.length(); j++)
-	{
-		aux2[j] = toupper(aux2[j]);
-	}
-
-	
-
-
-
-    output << t.tipo() << "\n"
-       << t.numero() << "\n"
-       << aux1 << " " << aux2 << "\n"
-       << "Caduca: "
-       << std::setfill('0') << std::setw(2) << t.caducidad().mes()
-       << "/"
-       << std::setw(2) << (t.caducidad().anno() % 100 ) << "\n" << std::endl;
-
-    return output ;
-
-}
+bool operator < (const Tarjeta& a, const Tarjeta& b){ return a.numero()<b.numero(); }

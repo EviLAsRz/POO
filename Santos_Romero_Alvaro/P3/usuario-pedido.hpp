@@ -1,39 +1,33 @@
 #ifndef USUARIO_PEDIDO_HPP
 #define USUARIO_PEDIDO_HPP
 
-#include "usuario.hpp"
-#include "pedido.hpp"
-#include <utility>
 #include <map>
 #include <set>
 
+class Pedido;
+class Usuario;
 class Usuario_Pedido{
 
     public:
+
         typedef std::set<Pedido*> Pedidos;
+        typedef std::map<Usuario*, Pedidos> User_Ped;
+        typedef std::map<Pedido*, Usuario*> Ped_User;
 
-        void asocia(Pedido &ped, Usuario &u);
-        void asocia(Usuario &u, Pedido &ped);
+        void asocia(Usuario &u, Pedido &ped) {
+            user_ped_[&u].insert(&ped);
+            ped_user_[&ped] = &u;
+        }
+        void asocia(Pedido &ped, Usuario &u) { asocia(u, ped); }
 
-        Pedidos pedidos(Usuario &u){ return uped_[&u];}
-        Usuario *cliente(Pedido &ped){ return pedu_[&ped];}
+        Pedidos pedidos(Usuario &u){ return user_ped_.find(&u)->second;}
+        Usuario *cliente(Pedido &ped){ return ped_user_.find(&ped)->second;}
     
     private:
 
-        std::map<Pedido*, Usuario*> pedu_;
-        std::map<Usuario*, Pedidos> uped_;
+        User_Ped user_ped_;
+        Ped_User ped_user_;
 
 };
-
-    inline void Usuario_Pedido::asocia(Pedido &ped, Usuario &u){
-        
-        uped_[&u].insert(&ped);
-        pedu_[&ped] = &u;
-    }
-
-    inline void Usuario_Pedido::asocia(Usuario &u, Pedido &ped){
-
-        return asocia(ped,u);
-    }
 
 #endif

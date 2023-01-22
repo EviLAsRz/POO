@@ -6,22 +6,22 @@
 #include <cctype>
 
 bool luhn(const Cadena &numero);    //se declara la funcion luhn de luhn.cpp
-
+std::set<Numero>Tarjeta::numeros;
 //CLASE NUMERO
 
 Numero::Numero(const Cadena &numero): numero_(longitud(numero)){
 
-    if (std::count_if(numero_.begin(), numero_.end(), static_cast<int(*)(int)>(std::isdigit)) != numero_.length()){
-        //se comprueba si en la cadena existe caracteres distintos de numeros
-        //para ello, se utiliza static_cast, para convertir los caracteres a numero, y luego con isdigit se comprueba si es un numero
-        //y que no sea distinto del tamaño del numero
+    if (std::count_if(numero_.begin(), numero_.end(), static_cast<int(*)(int)>(std::isdigit)) != numero_.length())
 
         throw Incorrecto(Razon::DIGITOS);
-    }
+    
+    if (numero_.length() < 13 || numero_.length() > 19)
 
-    if(!luhn(numero_)){
+        throw Incorrecto(Razon::LONGITUD);
+
+    if(!luhn(numero_))
         throw Incorrecto(Razon::NO_VALIDO); //se comprueba que el ultimo digito es de control
-    }
+    
 }
 
 Cadena Numero::espacios(const Cadena &numero){
@@ -56,43 +56,48 @@ bool operator <(const Numero &a, const Numero &b){
 
 //CLASE TARJETA
 
-Tarjeta::Tarjeta(const Numero &numero, Usuario &usuario, const Fecha &fecha_cad):numero_(numero), usuario_(&usuario), fecha_cad_(fecha_cad), activa_(true){
+Tarjeta::Tarjeta(const Numero &numero, Usuario &usuario, const Fecha &fecha_cad):numero_(numero), usuario_(&usuario),
+fecha_cad_(fecha_cad), activa_(true), tipo_(selec_tipo()){
 
-    if(fecha_cad_ < Fecha()){       //si la fecha de la tarjeta es menor que la fecha actual, significa que ha caducado
+    if (fecha_cad_ < Fecha()) {
 
         throw Caducada(fecha_cad_);
     }
 
-    const char *n = numero;
+    if (numeros.insert(numero_).second == false){
 
-    tipo_ = Tipo::OTRO; //por defecto, si no cumple ninguna condicion de abajo, sera del tipo OTRO
-
-    if((n[0] == '3' && n[1] == '4') || (n[0] == '3' && n[1] == '7')){   //si empieza por 34 o por 37
-
-        tipo_ = Tipo::AmericanExpress;
+        throw Num_duplicado(numero_);
     }
 
-    if((n[0] == '3' && n[1] != '4') || (n[0] == '3' && n[1] != '7')){   //si empieza por 3, salvo 34 o 37
+    auto usu_ = const_cast<Usuario*>(usuario_);
 
-        tipo_ = Tipo::JCB;
+    usu_->es_titular_de(*this); //usuario al que pertenece la tarjeta es el usuario con que se crea el objeto tarjeta
+}
+
+Tarjeta::Tipo Tarjeta::selec_tipo()const{
+    Cadena aux_tipo =numero_.n();
+    if (aux_tipo[0]=='3')
+    {
+        if (aux_tipo[1]=='4'||aux_tipo[1]=='7')
+        {
+            return AmericanExpress;
+        }
+        else{
+            return JCB;
+        } 
     }
-
-    if(n[0] == '4'){   //si empieza por 4
-
-        tipo_ = Tipo::VISA;
+    else if(aux_tipo[0]=='4'){
+        return VISA;
     }
-
-    if(n[0] == '5'){   //si empieza por 5
-
-        tipo_ = Tipo::Mastercard;
+    else if(aux_tipo[0]=='5'){
+        return Mastercard;
     }
-
-    if(n[0] == '6'){   //si empieza por 6
-
-        tipo_ = Tipo::Maestro;
+    else if (aux_tipo[0]=='6')
+    {
+        return Maestro;
     }
-
-    usuario.es_titular_de(*this); //usuario al que pertenece la tarjeta es el usuario con que se crea el objeto tarjeta
+    else
+        return Otro;
 }
 
 Tarjeta::~Tarjeta(){
@@ -100,6 +105,7 @@ Tarjeta::~Tarjeta(){
     if(Usuario *u = const_cast<Usuario*>(usuario_)){    //si el usuario coincide, se desvincula de la tarjeta
         u->no_es_titular_de(*this);
     }
+    numeros.erase(numero_);
 }
 
 bool Tarjeta::activa(bool valor){   //cambiar el estado de la tarjeta
@@ -107,18 +113,10 @@ bool Tarjeta::activa(bool valor){   //cambiar el estado de la tarjeta
     return activa_;
 }
 
-void Tarjeta::anula_titular(){
-
-    usuario_ = nullptr;     //puntero a usuario = 0;
-}
-
 bool operator <(const Tarjeta &a, const Tarjeta &b){
     return a.numero() < b.numero(); //devuelve true si es menor a que b
 }
 
-bool operator >(const Tarjeta &a, const Tarjeta &b){
-    return b.numero() < a.numero(); //devuelve true si es menor b que a
-}
 std::ostream &operator <<(std::ostream &os, const Tarjeta::Tipo& tipo){
 
     switch(tipo){ //dependiendo del tipo, se introduce uno y otro
@@ -128,7 +126,7 @@ std::ostream &operator <<(std::ostream &os, const Tarjeta::Tipo& tipo){
         case Tarjeta::Maestro: os << "Maestro";break;
         case Tarjeta::JCB: os << "JCB";break;
         case Tarjeta::AmericanExpress: os << "AmericanExpress";break;
-        case Tarjeta::OTRO: os << "OTRO";break;
+        case Tarjeta::Otro: os << "OTRO";break;
     }
     return os;
 }
@@ -150,9 +148,9 @@ std::ostream &operator << (std::ostream &os, const Tarjeta &tarjeta){
 
     //sobrecarga de inserccion para introducir directamente el tipo de la tarjeta
     os << tarjeta.tipo() << "\n" << tarjeta.numero() << "\n"
-       << nomTemp << " " << apelTemp << "\n"
-       << "Caduca: " << std::setfill('0') << std::setw(2) << tarjeta.caducidad().mes()      //caracter de relleno: 0 y extensión maxima de la inserción
-       << "/" << std::setw(2) << (tarjeta.caducidad().anno() % 100) << "\n" << std::endl;   //se divide el anno entre 100 para que solo aparezca los dos ultimos digitos
+        << nomTemp << " " << apelTemp << "\n"
+        << "Caduca: " << std::setfill('0') << std::setw(2) << tarjeta.caducidad().mes()      //caracter de relleno: 0 y extensión maxima de la inserción
+        << "/" << std::setw(2) << (tarjeta.caducidad().anno() % 100) << "\n" << std::endl;   //se divide el anno entre 100 para que solo aparezca los dos ultimos digitos
 
     return os;
 }

@@ -1,125 +1,95 @@
-//
-// Created by Claudia Soriano Roldán on 24/04/2019.
-//
-
-#include <random>
-#include <ctime>
-#include <cstring>
-#include <iomanip>
-#include <iostream>
-#include <unistd.h>
 #include "usuario.hpp"
+#include "../P1/cadena.hpp"
+#include "tarjeta.hpp"
+#include <unistd.h> 
+#include <cstdlib> 
+#include <string.h> 
+#include <random> 
+#include <iomanip> 
+#include <set>
 
-/**************** CLASE CLAVE *****************/
+using namespace std;
 
-Clave::Clave(const char* c)
-{
-    const char* crypto = "zyxwvutsrqponmlkjihgfedcbaZYXWVUTSRQPONMLKJIHGFEDCBA9876543210/.";
-    char* cifrar = new char [2];
+/* ------------------------------- CLASE CLAVE ------------------------------ */
 
-    if(strlen(c) < 5)
-    {
+Clave::Clave(const char* input) {
+    //Excepcion de clave demasiado corta
+
+    if (strlen(input)<5)
         throw Incorrecta(Razon::CORTA);
-    }
+    //Encriptado    
+    char const MD5chars[]="./0123456789ABCDEFGHIJKLMNOPQRST""UVWXYZabcdefghijklmnopqrstuvwxyz";
+    random_device r_dev;
+    char salida[2]={MD5chars[rand() % 64],MD5chars[rand()% 64]};
 
-    cifrar[0] = crypto[rand() % 64];
-    cifrar[1] = crypto[rand() % 64];
+    if (crypt(input,salida)==nullptr)
+        throw Clave::ERROR_CRYPT;
+    clave_cifrada =crypt(input,salida);
+} 
 
-    if(crypt(c,cifrar) == NULL)
-    {
-        throw Incorrecta(Razon::ERROR_CRYPT);
-    }
-
-    contrasena_ = crypt(c,cifrar);
+bool Clave::verifica(const char* a)const{
+    Cadena v(crypt(a,clave_cifrada.c_str()));
+    return v == clave_cifrada;
 }
 
-bool Clave::verifica(const char* c) const
-{
-    return std::strcmp(crypt(c, contrasena_.c_str()), contrasena_.c_str()) == 0;
+/* ------------------------------ CLASE USUARIO ----------------------------- */
+Usuario::I Usuario::identificadores;
+
+Usuario::Usuario(const Cadena& id,const Cadena& nombre, const Cadena& apellidos, const Cadena& direccion, const Clave& clave) :
+    identficador_(id), nombre_(nombre), apellidos_(apellidos), direccion_(direccion), pass_(clave) {
+
+    if (identificadores.insert(identficador_).second==false)
+		throw Id_duplicado(identficador_);
 }
 
+void Usuario::es_titular_de(Tarjeta& t) {
 
-/*********************** CLASE USUARIO *************************/
-
-Usuario::Usuarios Usuario::usuario_;
-
-Usuario::Usuario(const Cadena &identificador, const Cadena &nom, const Cadena &apell, const Cadena &dir, const Clave &p):
-identificador_(identificador), nombre_(nom), apellidos_(apell), direccion_(dir), password_(p)
-{
-    if(!usuario_.insert(identificador).second)
-    {
-        throw Id_duplicado(identificador_);
-    }
+    if (t.titular()==this)
+        Tarjeta_.insert(make_pair(t.numero(),&t));
 }
 
-void Usuario::compra(Articulo &a, unsigned cant)
-{
-    if(cant != 0)
-    {
-        articulos_[&a] = cant;
-    }else{
-        articulos_.erase(&a);
-    }
-}
-
-void Usuario::es_titular_de(Tarjeta &t)
-{
-    if(this == t.titular())
-    {
-        tarjetas_.insert(std::make_pair(t.numero(), &t));
-    }
-}
-
-void Usuario::no_es_titular_de(Tarjeta &t)
-{
-    t.anula_titular();
-    tarjetas_.erase(t.numero());
-}
-
-std::ostream& mostrar_carro(std::ostream& output, const Usuario& u)
-{
-    output << "Carrito de compra de " << u.id() << " [Artículos: "<< u.n_articulos() << "]" << "\n"
-       << "Cant.Artículo"<< std::endl
-       << std::setw(95) << std::setfill('=') << '\n' << std::setfill(' ');
-
-    int nart = u.n_articulos() ;
-
-    while( nart > 0 )
-    {
-        for(auto i = u.compra().begin(); i != u.compra().end(); i++)
-        {
-            output << std::setw(4) << i->second << "    "
-                   << " [" << (*i->first).referencia() << "] " << "\""
-                   << (*i->first).titulo() << "\", "
-                   << (*i->first).f_publi().anno()
-                   << ". " << std::fixed << std::setprecision(2) << (*i->first).precio() << " €" << std::endl;
-
-            --nart;
-        }
-    }
-
-    return output;
-}
-
-std::ostream& operator <<(std::ostream& output, const Usuario& u)
-{
-    output << u.identificador_ << "[" << u.password_.clave().c_str() << "]" << u.nombre_ << u.apellidos_ << "\n"
-       << u.direccion_ << std::endl;
-    output <<"Tarjetas:" ;
-    for(auto i = u.tarjetas().begin(); i != u.tarjetas().end(); i++)
-    {
-        output << *i->second << std::endl ;
-    }
-
-    return output ;
-}
-
-Usuario::~Usuario()
-{
-    for(auto i = tarjetas_.begin(); i != tarjetas_.end(); i++)
-    {
+Usuario::~Usuario() {
+    for ( Usuario::Tarjetas::const_iterator i=Tarjeta_.begin();i!=Tarjeta_.end();++i)
         i->second->anula_titular();
-    }
+    identificadores.erase(identficador_);
+}
 
-    usuario_.erase(identificador_);
+void Usuario::compra(Articulo& a, unsigned int cantidad) {
+    auto found = Articulos.find(&a);
+    if (found == Articulos.end() ) { 
+        if(cantidad > 0)
+        Articulos[const_cast<Articulo*>(&a)] = cantidad; 
+    }else{ 
+            if(cantidad > 0 )
+                Articulos[const_cast<Articulo*>(&a)] = cantidad;   
+            else 
+                Articulos.erase(const_cast<Articulo*>(&a)); 
+        }
+}
+
+void mostrar_carro(ostream& salida,Usuario& u) {
+
+    salida<<"Carrito de compra de "<<u.id()<<" [Artículos: "<<u.n_articulos()<<"]"<< endl<< " Cant.\tArtículo" <<endl;
+    salida <<"===========================================================" <<endl;
+    for(auto i = u.compra().begin(); i != u.compra().end(); ++i) {
+
+        salida << " " << i->second << "\t" << "[" << i->first->referencia() << "] \"" << i->first->titulo() << "\", ";
+        salida << i->first->f_publi().anno() << ". " << setprecision(2) << std::fixed << i->first->precio() << " €" << endl;
+    }
+}
+
+ostream& operator<<(std::ostream& salida,const Usuario& a)noexcept {
+    salida<<a.id()<<'['<<a.pass_.clave()<<']'<<" "<<a.nombre()<<" "<<a.apellidos()<<endl;
+    salida<<a.direccion()<<endl;
+    salida<<"Tarjetas: "<<endl;
+
+    for (Usuario::Tarjetas::const_iterator i=a.Tarjeta_.begin();i!=a.Tarjeta_.end();++i)
+        salida<<*(i->second)<<endl;
+
+    return salida;
+}
+
+void Usuario::no_es_titular_de(Tarjeta& t){
+    t.anula_titular();
+    Tarjeta_.erase(t.numero());
 }

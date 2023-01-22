@@ -12,30 +12,23 @@ class Clave{
 
     public:
     Clave(const char* p);
-    const Cadena& clave() const;
+    const Cadena& clave() const { return password; }
     enum Razon{CORTA, ERROR_CRYPT};
     bool verifica( const char* p) const;
     class Incorrecta{
 
         public:
 
-        Incorrecta(const Razon r): error_(r){}
-        Razon razon() const{
-            return error_;
-        }
+        Incorrecta(const Razon r): error_(r){};
+        Razon razon() const{ return error_; }
         private:
-        
-        Razon error_;
+            Razon error_;
     };
 
     private:
     Cadena password;
 
 };
-
-inline const Cadena& Clave::clave() const{
-    return password;
-}
 
 class Numero;
 class Tarjeta; 
@@ -44,15 +37,14 @@ class Usuario{
 
     public:
 
-    typedef std::unordered_set<Cadena> Usuarios;
-    typedef std::map<Numero, Tarjeta*> Tarjetas;
-    typedef std::unordered_map<Articulo*, unsigned > Articulos;
-    
-
     Usuario(const Cadena &identificador, const Cadena &nombre, const Cadena &apellidos, const Cadena &direccion, const Clave &password);
     Usuario &operator = (const Usuario &u) = delete;        //borro tanto operador de asignacion (enunciado)
     Usuario(const Usuario &u) = delete;                     //como el constructor de copia (enunciado)
     ~Usuario();
+
+    typedef std::unordered_set<Cadena> Usuarios;
+    typedef std::map<Numero, Tarjeta*> Tarjetas;
+    typedef std::unordered_map<Articulo*, unsigned int> Articulos;
 
     void es_titular_de(Tarjeta& tarjeta);
     void no_es_titular_de(Tarjeta& tarjeta);
