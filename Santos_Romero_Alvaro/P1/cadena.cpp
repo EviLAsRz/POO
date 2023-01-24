@@ -49,10 +49,10 @@ Cadena::Cadena(Cadena&& cad):s_(cad.s_),tam_(cad.tam_) // Poner elementos no con
 
 Cadena::Cadena(const Cadena& cad ,size_t emp, size_t t):tam_(t)
 {
-	 
+
     if(emp > cad.tam_ -1)
     {
-    	throw std::out_of_range("Indice Fuera de rango") ; 
+		throw std::out_of_range("Indice Fuera de rango") ; 
     }
 
     s_ = new char[t +1] ;
@@ -66,7 +66,7 @@ Cadena::Cadena(const Cadena& cad ,size_t emp, size_t t):tam_(t)
 		j++ ; 
 	}
 	
- 	s_[tam_] = '\0' ; 
+	s_[tam_] = '\0' ; 
 
 }
 
@@ -80,7 +80,6 @@ Cadena Cadena::substr(size_t i , size_t t) const
 			throw std::out_of_range("Error.Fuera del rango") ; 
 		}
 
-	 
 	return Cadena(*this , i, t ) ; 
 
 } 
