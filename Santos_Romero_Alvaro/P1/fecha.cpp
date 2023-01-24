@@ -114,7 +114,7 @@ int Fecha::anno() const noexcept{
 Fecha Fecha::operator++(int){   //postincremento (fecha++)
     Fecha fecha = *this;
     *this +=1;
-    return fecha;               //devolvemos la copia modificada (no devolvemos el objeto implicito)
+    return fecha;               //devolvemos la copia no modificada (no devolvemos el objeto implicito)
 }
 
 Fecha &Fecha::operator++(){     //preincremento (++fecha)
