@@ -1,7 +1,7 @@
 #include <iostream>
 #include <algorithm>
 
-class ListaOrdenada : public List<double> {
+class ListaOrdenada : private List<double> {
 
 	public:
 		typedef list<double> const_iterator;
